@@ -37,9 +37,9 @@ type Article struct {
 	IpfsAddress        string    `orm:"size(500)"`
 	OwnerAccountId     int       `orm:"default(0)"`
 	LastOwnerAccountId int       `orm:"default(0)"`
-	AcquireDate        time.Time `orm:"auto_now;type(date)`
-	OwnerName          string    `orm:size(100)"`
-	OwnerCardNumber    string    `orm:size(100)"`
+	AcquireDate        time.Time `orm:"auto_now;type(date)"`
+	OwnerName          string    `orm:"size(100)"`
+	OwnerCardNumber    string    `orm:"size(100)"`
 }
 
 // ArticleType 文章类型表

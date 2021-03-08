@@ -24,7 +24,7 @@ func init() {
 	// 编辑文章
 	beego.Router("/article/edit", &controllers.ArticleController{}, "get:ShowEdit;post:Edit")
 	// 删除文章
-	beego.Router("/article/delete", &controllers.ArticleController{}, "get:Delete")
+	beego.Router("/article/delete", &controllers.ArticleController{}, "get:Delete;post:HandleDelete")
 	// 文章类型
 	//beego.Router("/article/addType", &controllers.ArticleController{}, "get:ShowArtType;post:AddType")
 	// 退出

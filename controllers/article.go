@@ -2,12 +2,11 @@ package controllers
 
 import (
 	"AMS/models"
+	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/orm"
 	"math"
 	"strconv"
 	"time"
-
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/orm"
 )
 
 // ArticleController 自定义控制器
@@ -48,7 +47,7 @@ func (a *ArticleController) ShowIndex() {
 	/*_,err := querySeter.All(&articles)*/
 	count, _ := querySeter.Count()
 	// 2.设置每一页显示的数量，从而得到总的页数
-	var pageSize = 2
+	var pageSize = 5
 	pageCount := math.Ceil(float64(count) / float64(pageSize)) // 向上取整，显示的页面不会出现小数
 	// 3.首页和末页
 	pi := a.GetString("pi")
@@ -178,35 +177,18 @@ func (a *ArticleController) HandleAdd() {
 	//}
 	//art := models.Article{ArtName: artName, ArtContent: artContent, ArtImg: filePath, ArtType: &aType}
 
-	//art := models.Article{
-	//	Title:              title,
-	//	IpfsAddress:        ipfsaddress,
-	//	OwnerAccountId:     10,
-	//	LastOwnerAccountId: 0,
-	//	AcquireDate:        time.Time{},
-	//	OwnerName:          ownername,
-	//	OwnerCardNumber:    ownercardnumber,
-	//}
-
-	//beego.Info("*******1=" + art.Title + "******")
-	//beego.Info("*******2=" + art.IpfsAddress + "******")
-	////beego.Info("*******3=" + art.OwnerAccountId + "******")
-	////beego.Info("*******4="+art.LastOwnerAccountId+"******");
-	////beego.Info("*******5="+art.AcquireDate+"******");
-	//beego.Info("*******6=" + art.OwnerName + "******")
-	//beego.Info("*******6=" + art.OwnerCardNumber + "******")
-	art1 := models.Article{
-		Title:              "title",
-		IpfsAddress:        "ipfsaddress",
+	art := models.Article{
+		Title:              title,
+		IpfsAddress:        ipfsaddress,
 		OwnerAccountId:     10,
 		LastOwnerAccountId: 0,
 		AcquireDate:        time.Time{},
-		OwnerName:          "ownername",
-		OwnerCardNumber:    "ownercardnumber",
+		OwnerName:          ownername,
+		OwnerCardNumber:    ownercardnumber,
 	}
 
 	var err error
-	_, err = o.Insert(&art1)
+	_, err = o.Insert(&art)
 	if err != nil {
 		beego.Info("添加文章至数据库失败")
 		beego.Info(err)
@@ -358,8 +340,14 @@ func (a *ArticleController) Edit() {
 	}
 }
 
-// Delete 删除业务处理
+//展示删除产权界面
 func (a *ArticleController) Delete() {
+	a.Data["username"] = a.GetSession("username")
+	a.TplName = "delete.html"
+}
+
+// Delete 删除业务处理
+func (a *ArticleController) HandleDelete() {
 	// 1.获取文章id
 	id, _ := a.GetInt("id")
 	// 2.查询出对应数据并删除
