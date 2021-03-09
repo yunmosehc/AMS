@@ -44,6 +44,13 @@ func (a *ArticleController) ShowIndex() {
 	o := orm.NewOrm()
 	var articles []models.Article
 	querySeter := o.QueryTable("Article").RelatedSel()
+	//获取用户的账户编号
+	accountId := a.GetString("accountid")
+	accountid, err2 := strconv.Atoi(accountId)
+	if err2 != nil {
+	}
+
+	querySeter = querySeter.Filter("OwnerAccountId", accountid)
 	/*_,err := querySeter.All(&articles)*/
 	count, _ := querySeter.Count()
 	// 2.设置每一页显示的数量，从而得到总的页数
@@ -92,6 +99,7 @@ func (a *ArticleController) ShowIndex() {
 	//a.TplName = "index.html"
 
 	a.Data["username"] = a.GetSession("username")
+	a.Data["accountid"] = a.GetSession("accountid")
 	//a.Data["types"] = types
 	a.Data["count"] = count
 	a.Data["pageCount"] = pageCount
@@ -116,6 +124,7 @@ func (a *ArticleController) ShowAdd() {
 
 	//a.Data["types"] = types
 	a.Data["username"] = a.GetSession("username")
+	a.Data["accountid"] = a.GetSession("accountid")
 	a.TplName = "add.html"
 	//a.Redirect("/addArticle",302)
 }
@@ -132,6 +141,19 @@ func (a *ArticleController) HandleAdd() {
 	ipfsaddress := a.GetString("ipfsaddress")
 	ownername := a.GetString("ownername")
 	ownercardnumber := a.GetString("ownercardnumber")
+	accountid, err2 := a.GetInt("accountid")
+	if err2 != nil {
+	}
+	//获取session中的accountid并转成整数
+	//accountId := a.Ctx.GetCookie("accountid")
+	//beego.Info("string is : " + accountId)
+	//accountid, err2 := strconv.Atoi(accountId)
+	//beego.Info("int is : ")
+	//beego.Info(accountid)
+	//
+	//if err2 != nil {
+	//	beego.Info("accountId字符串转整数失败")
+	//}
 
 	// 2.校验数据（是否为空）
 	if title == "" || ipfsaddress == "" || ownername == "" || ownercardnumber == "" {
@@ -180,7 +202,7 @@ func (a *ArticleController) HandleAdd() {
 	art := models.Article{
 		Title:              title,
 		IpfsAddress:        ipfsaddress,
-		OwnerAccountId:     10,
+		OwnerAccountId:     accountid,
 		LastOwnerAccountId: 0,
 		AcquireDate:        time.Time{},
 		OwnerName:          ownername,
@@ -343,22 +365,40 @@ func (a *ArticleController) Edit() {
 //展示删除产权界面
 func (a *ArticleController) Delete() {
 	a.Data["username"] = a.GetSession("username")
+	a.Data["accountid"] = a.GetSession("accountid")
 	a.TplName = "delete.html"
 }
 
 // Delete 删除业务处理
 func (a *ArticleController) HandleDelete() {
 	// 1.获取文章id
-	id, _ := a.GetInt("id")
+	artid, _ := a.GetInt("artid")
 	// 2.查询出对应数据并删除
 	o := orm.NewOrm()
-	article := models.Article{ArtID: id}
+	article := models.Article{ArtID: artid}
+	//判断文章是否存在
 	err := o.Read(&article)
 	if err != nil {
 		beego.Info("获取文章信息失败")
-		a.Redirect("/article/index", 302)
+		a.Redirect("/article/delete", 302)
 		return
 	}
+	//判断提交的信息是否有误
+	accountId := a.GetString("accountid")
+	accountid, err := strconv.Atoi(accountId)
+	if article.OwnerAccountId != accountid {
+		beego.Info("您无法删除不属于您的文章！")
+		a.Redirect("/article/delete", 302)
+		return
+	}
+	ownername := a.GetString("ownername")
+	ownercardnumber := a.GetString("ownercardnumber")
+	if article.OwnerName != ownername || article.OwnerCardNumber != ownercardnumber {
+		beego.Info("产权人姓名或身份证号有误！")
+		a.Redirect("/article/delete", 302)
+		return
+	}
+
 	_, err = o.Delete(&article)
 	if err != nil {
 		beego.Info("获取文章信息失败")
