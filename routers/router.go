@@ -22,7 +22,7 @@ func init() {
 	// 文章详情
 	//beego.Router("/article/content", &controllers.ArticleController{}, "get:ShowContent")
 	// 编辑文章
-	beego.Router("/article/edit", &controllers.ArticleController{}, "get:ShowEdit;post:Edit")
+	beego.Router("/article/update", &controllers.ArticleController{}, "get:ShowUpdate;post:Update")
 	// 删除文章
 	beego.Router("/article/delete", &controllers.ArticleController{}, "get:Delete;post:HandleDelete")
 	// 文章类型

@@ -245,119 +245,85 @@ func (a *ArticleController) HandleAdd() {
 //}
 
 // ShowEdit 展示编辑页面
-func (a *ArticleController) ShowEdit() {
-	a.TplName = "edit.html"
-	// 1.获取文章id
-	id, _ := a.GetInt("id")
-	// 2.根据id查询文章信息
-	o := orm.NewOrm()
-	// 2.1 获取文章类型
-	//var types []models.ArticleType
-	//_, err := o.QueryTable("ArticleType").RelatedSel().All(&types)
+func (a *ArticleController) ShowUpdate() {
+	a.TplName = "update.html"
+	//// 1.获取文章id
+	//id, _ := a.GetInt("id")
+	//// 2.根据id查询文章信息
+	//o := orm.NewOrm()
+	//// 2.1 获取文章类型
+	////var types []models.ArticleType
+	////_, err := o.QueryTable("ArticleType").RelatedSel().All(&types)
+	////if err != nil {
+	////	beego.Info("获取文章类型错误")
+	////	a.Redirect("/article/index", 302)
+	////	return
+	////}
+	//
+	//article := models.Article{ArtID: id}
+	//var err error
+	//err = o.Read(&article)
 	//if err != nil {
-	//	beego.Info("获取文章类型错误")
+	//	beego.Info("查询数据信息失败")
 	//	a.Redirect("/article/index", 302)
 	//	return
 	//}
-
-	article := models.Article{ArtID: id}
-	var err error
-	err = o.Read(&article)
-	if err != nil {
-		beego.Info("查询数据信息失败")
-		a.Redirect("/article/index", 302)
-		return
-	}
-	// 3.将文章信息传给视图
-	//a.Data["types"] = types
+	//// 3.将文章信息传给视图
+	////a.Data["types"] = types
 	a.Data["username"] = a.GetSession("username")
-	a.Data["article"] = article
+	a.Data["accountid"] = a.GetSession("accountid")
+	//a.Data["article"] = article
 }
 
 // Edit 编辑文章业务处理
-func (a *ArticleController) Edit() {
+func (a *ArticleController) Update() {
 	// 1.获取页面数据
-	id, err := a.GetInt("id")
-	if err != nil {
-		beego.Info("获取文章ID错误")
-		a.Redirect("/article/index", 302)
-		return
-	}
-	title := a.GetString("title")
-	//content := a.GetString("artcontent")
-	//// 2.校验数据
-	//if name == "" || content == "" {
-	//	beego.Info("名字或内容不能为空")
-	//	a.Redirect("/article/index", 302)
-	//	return
-	//}
-	// 3.校验图片是否合法
-	//var filePath string
-	//file, head, e := a.GetFile("artfile")
-	//if file != nil {
-	//	defer file.Close()
-	//	if e != nil {
-	//		beego.Info("上传图片失败")
-	//		a.Redirect("/article/index", 302)
-	//		return
-	//	}
-	//	// 3.1校验图片的格式
-	//	ext := path.Ext(head.Filename)
-	//	if ext != ".jpg" && ext != ".png" && ext != ".gif" {
-	//		beego.Info("图片格式不正确")
-	//		a.Redirect("/article/index", 302)
-	//		return
-	//	}
-	//	// 3.2校验图片的大小
-	//	if head.Size > 20<<20 {
-	//		beego.Info("图片大小限制为20M")
-	//		a.Redirect("/article/index", 302)
-	//		return
-	//	}
-	//	// 3.3将文件重命名
-	//	unix := time.Now().Format("20060102_150405") + ext
-	//	err := a.SaveToFile("artfile", "./static/img/"+unix)
-	//	if err != nil {
-	//		beego.Info("文件保存本地失败")
-	//		a.Redirect("/article/index", 302)
-	//		return
-	//	}
-	//	filePath = "/static/img/" + unix
-	//}
-	ipfsaddress := a.GetString("ipfsaddress")
+	artId := a.GetString("artid")
+	owneraccountId := a.GetString("accountid")
 	ownername := a.GetString("ownername")
 	ownercardnumber := a.GetString("ownercardnumber")
-	// 4.更新数据库数据
+	//string转int
+	artid, err := strconv.Atoi(artId)
+	owneraccountid, err := strconv.Atoi(owneraccountId)
+	if err != nil {
+	}
+	//2.判断文章是否存在
 	o := orm.NewOrm()
-	art := models.Article{ArtID: id}
-	err = o.Read(&art)
-	if err == nil {
-		if art.Title != title {
-			art.Title = title
-		}
-		if art.IpfsAddress != ipfsaddress {
-			art.IpfsAddress = ipfsaddress
-		}
-		if art.OwnerName != ownername {
-			art.OwnerName = ownername
-		}
-		if art.OwnerCardNumber != ownercardnumber {
-			art.OwnerCardNumber = ownercardnumber
-		}
-		//if filePath != "" {
-		//	art.ArtImg = filePath
-		//}
-		_, err = o.Update(&art)
-		if err != nil {
-			beego.Info("更新数据信息失败")
-			a.Redirect("/article/index", 302)
-			return
-		}
-		// 5.跳转页面
+	art_old := models.Article{ArtID: artid}
+	err = o.Read(&art_old)
+	if err != nil {
+		beego.Info("该文章编号不存在！")
+		a.Redirect("/article/update", 302)
+		return
+	}
+	//判断新产权人账户是否存在
+	newowneraccountid := models.UserInfo{AccountId: owneraccountid}
+	err = o.Read(&newowneraccountid)
+	if err != nil {
+		beego.Info("该产权人编号不存在！")
+		a.Redirect("/article/update", 302)
+		return
+	}
+	//3.取出文章产权信息
+	title := art_old.Title
+	ipfsAddress := art_old.IpfsAddress
+	// 4.更新文章产权信息
+	art_new := models.Article{
+		ArtID:           artid,
+		OwnerAccountId:  owneraccountid,
+		OwnerName:       ownername,
+		OwnerCardNumber: ownercardnumber,
+		Title:           title,
+		IpfsAddress:     ipfsAddress,
+	}
+	var err1 error
+	_, err1 = o.Update(&art_new)
+	if err1 == nil {
 		a.Redirect("/article/index", 302)
+		return
 	} else {
-		beego.Info("读取数据信息失败")
-		a.Redirect("/article/index", 302)
+		beego.Info("更新数据信息失败")
+		a.Redirect("/article/update", 302)
 		return
 	}
 }
